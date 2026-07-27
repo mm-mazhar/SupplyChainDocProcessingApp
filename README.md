@@ -7,7 +7,7 @@ Originally, developed for a client with `Azure Document Intelligence` and `Azure
 
 ## System Architecture
 
-![System](docs/images/SysArch.png)
+![System](docs/images/supply-chain-doc-intel.svg)
 
 
 ## Use Case
