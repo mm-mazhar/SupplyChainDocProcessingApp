@@ -8,7 +8,7 @@ Originally, developed for a client with `Azure Document Intelligence` and `Azure
 ## System Architecture
 
 <!-- ![System](docs/images/supply-chain-doc-intel.svg) -->
-<img src="docs/images/supply-chain-doc-intel.svg" alt="System" width="1200" height="auto">
+<img src="docs/images/supply-chain-doc-intel.svg" alt="System" width="1200" height="500">
 
 
 ## Use Case
