@@ -154,55 +154,84 @@ class MongoIngestor:
         print("Inserted ID:", result.inserted_id)
 
 
+def _safe_numeric(value: str | None, cast: type) -> int | float | None:
+    """Safely cast a string to int or float, stripping currency symbols and commas.
+
+    Returns None if the value is missing, non-numeric, or looks like a header.
+    """
+    if not value:
+        return None
+    cleaned = value.replace(",", "").replace("$", "").replace("£", "").replace("€", "").strip()
+    try:
+        return cast(cleaned)
+    except (ValueError, TypeError):
+        return None
+
+
+def _extract_headers(table: list[dict], row_index: int = 0) -> dict[int, str]:
+    """Extract column headers from a specific row, normalised to snake_case."""
+    return {
+        cell["column_index"]: cell["content"].replace(":", "").strip().lower().replace(" ", "_")
+        for cell in table
+        if cell["row_index"] == row_index and cell["content"].strip()
+    }
+
+
+def _table_to_dicts(table: list[dict]) -> list[dict]:
+    """Convert a cell list into a list of row dicts keyed by normalised header names."""
+    headers = _extract_headers(table, row_index=0)
+    rows: dict[int, dict] = {}
+    for cell in table:
+        if cell["row_index"] == 0:
+            continue
+        row = rows.setdefault(cell["row_index"], {})
+        key = headers.get(cell["column_index"])
+        if key:
+            row[key] = cell["content"].strip()
+    return list(rows.values())
+
+
 def parse_tables(result: dict) -> dict:
     tables = result.get("tables", [])
 
-    if len(tables) < 2:
-        return {"error": "Insufficient tables"}
-
     # -------- ORDER TABLE --------
-    order_table = tables[0]
-    headers, values = {}, {}
-
-    for cell in order_table:
-        if cell["row_index"] == 0:
-            headers[cell["column_index"]] = cell["content"].strip().lower().replace(" ", "_")
-        elif cell["row_index"] == 1:
-            values[cell["column_index"]] = cell["content"].strip()
-
-    order_data = {headers[i]: values.get(i) for i in headers}
+    order_data: dict = {}
+    if tables:
+        order_table = tables[0]
+        headers = _extract_headers(order_table, row_index=0)
+        values: dict[int, str] = {
+            cell["column_index"]: cell["content"].strip()
+            for cell in order_table
+            if cell["row_index"] == 1
+        }
+        order_data = {headers[i]: values.get(i, "") for i in headers}
 
     # -------- PRODUCT TABLE --------
-    product_table = tables[1]
-    product_headers = {}
-
-    for cell in product_table:
-        if cell["row_index"] == 0:
-            product_headers[cell["column_index"]] = (
-                cell["content"].replace(":", "").strip().lower().replace(" ", "_")
+    products: list[dict] = []
+    if len(tables) >= 2:
+        product_rows = _table_to_dicts(tables[1])
+        for row in product_rows:
+            quantity = _safe_numeric(
+                row.get("quantity") or row.get("qty"),
+                int,
             )
-
-    rows = {}
-    for cell in product_table:
-        if cell["row_index"] > 0:
-            row = rows.setdefault(cell["row_index"], {})
-            key = product_headers.get(cell["column_index"])
-            row[key] = cell["content"].strip()
-
-    products = []
-    for row in rows.values():
-        products.append({
-            "product_id": row.get("product_id"),
-            "product_name": row.get("product"),
-            "quantity": int(row.get("quantity")) if row.get("quantity") else None,
-            "unit_price": float(row.get("unit_price")) if row.get("unit_price") else None
-        })
+            unit_price = _safe_numeric(
+                row.get("unit_price") or row.get("price") or row.get("unitprice"),
+                float,
+            )
+            products.append({
+                "product_id": row.get("product_id") or row.get("id"),
+                "product_name": row.get("product") or row.get("product_name") or row.get("description"),
+                "quantity": quantity,
+                "unit_price": unit_price,
+            })
 
     return {
         "order_id": order_data.get("order_id"),
         "order_date": order_data.get("order_date"),
         "customer_name": order_data.get("customer_name"),
-        "products": products
+        "products": products,
+        "raw_order_fields": order_data,
     }
 
 
