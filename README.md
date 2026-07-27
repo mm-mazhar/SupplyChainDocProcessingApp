@@ -7,6 +7,8 @@ Originally, developed for a client with `Azure Document Intelligence` and `Azure
 
 ## System Architecture
 
+![System](docs/images/sys_arch_01.jpg)
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        INPUT DOCUMENTS                              │
