@@ -7,9 +7,55 @@ Originally, developed for a client with `Azure Document Intelligence` and `Azure
 
 ## System Architecture
 
-<!-- ![System](docs/images/supply-chain-doc-intel.svg) -->
-<img src="docs/images/supply-chain-doc-intel.svg" alt="System" width="1200" height="500">
-
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        INPUT DOCUMENTS                              │
+│              PDFs  ·  Scanned Images  ·  Purchase Orders            │
+└────────────────────────┬────────────────────────────────────────────┘
+                         │
+            ┌────────────▼────────────┐
+            │   DOCUMENT EXTRACTION   │
+            │                         │
+            │  ┌──────────────────┐   │
+            │  │   pdfplumber     │   │  ← Native PDF text + table extraction
+            │  └──────────────────┘   │
+            │           │             │
+            │  ┌──────────────────┐   │
+            │  │   PaddleOCR      │   │  ← Fallback for scanned/image PDFs
+            │  └──────────────────┘   │
+            └────────────┬────────────┘
+                         │
+                  Raw text + tables
+                         │
+            ┌────────────▼────────────┐
+            │  DETERMINISTIC PARSING  │
+            │                         │
+            │  Custom Python Module   │  ← Cleans rows/cols, normalises
+            │  (parse_tables)         │    cell dicts, removes noise
+            └────────────┬────────────┘
+                         │
+              Structured but unverified data
+                         │
+            ┌────────────▼────────────┐
+            │    AI NORMALISATION     │
+            │                         │
+            │  ┌──────────────────┐   │
+            │  │  Google Gemini   │   │  ← Primary: schema-aware normalisation
+            │  │  (Primary)       │   │
+            │  └────────┬─────────┘   │
+            │           │ on failure  │
+            │  ┌────────▼─────────┐   │
+            │  │  OpenRouter      │   │  ← Fallback: OSS models via API
+            │  │  (Fallback)      │   │
+            │  └──────────────────┘   │
+            └────────────┬────────────┘
+                         │
+               Clean, schema-validated JSON
+                         │
+            ┌────────────▼────────────┐
+            │     MongoDB Atlas       │  ← Cloud-hosted, flexible document store
+            └─────────────────────────┘
+```
 
 ## Use Case
 
