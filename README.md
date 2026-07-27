@@ -9,56 +9,6 @@ Originally, developed for a client with `Azure Document Intelligence` and `Azure
 
 ![System](docs/images/sys_arch_01.jpg)
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        INPUT DOCUMENTS                              │
-│              PDFs  ·  Scanned Images  ·  Purchase Orders            │
-└────────────────────────┬────────────────────────────────────────────┘
-                         │
-            ┌────────────▼────────────┐
-            │   DOCUMENT EXTRACTION   │
-            │                         │
-            │  ┌──────────────────┐   │
-            │  │   pdfplumber     │   │  ← Native PDF text + table extraction
-            │  └──────────────────┘   │
-            │           │             │
-            │  ┌──────────────────┐   │
-            │  │   PaddleOCR      │   │  ← Fallback for scanned/image PDFs
-            │  └──────────────────┘   │
-            └────────────┬────────────┘
-                         │
-                  Raw text + tables
-                         │
-            ┌────────────▼────────────┐
-            │  DETERMINISTIC PARSING  │
-            │                         │
-            │  Custom Python Module   │  ← Cleans rows/cols, normalises
-            │  (parse_tables)         │    cell dicts, removes noise
-            └────────────┬────────────┘
-                         │
-              Structured but unverified data
-                         │
-            ┌────────────▼────────────┐
-            │    AI NORMALISATION     │
-            │                         │
-            │  ┌──────────────────┐   │
-            │  │  Google Gemini   │   │  ← Primary: schema-aware normalisation
-            │  │  (Primary)       │   │
-            │  └────────┬─────────┘   │
-            │           │ on failure  │
-            │  ┌────────▼─────────┐   │
-            │  │  OpenRouter      │   │  ← Fallback: OSS models via API
-            │  │  (Fallback)      │   │
-            │  └──────────────────┘   │
-            └────────────┬────────────┘
-                         │
-               Clean, schema-validated JSON
-                         │
-            ┌────────────▼────────────┐
-            │     MongoDB Atlas       │  ← Cloud-hosted, flexible document store
-            └─────────────────────────┘
-```
-
 ## Use Case
 
 Designed for small-to-medium organisations that handle large volumes of supply chain documents — Purchase Orders, Invoices, Delivery Notes — arriving as PDFs or scanned images.
