@@ -3,7 +3,7 @@
 
 This is an end-to-end Generative AI project focused on supply chain document processing. The application ingests unstructured documents — PDFs and scanned images — and converts them into clean, structured data stored in MongoDB Atlas.
 
-Originally, developed for a client with `Azure Document Intelligence` and `Azure OpenAI`, but for demo purpose switche to `PaddleOCR` and `PDF Plumber` and some parts are omitted.
+Originally, developed for a client with `Azure Document Intelligence` and `Azure OpenAI`, but for demo purpose switched to `PaddleOCR` and `PDF Plumber` and some parts are omitted.
 
 ## System Architecture
 
