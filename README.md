@@ -1,5 +1,8 @@
 # PaddleOCR + PDF Plumber + Google Gemini + OpenRouter + MongoDB Atlas | End-to-End Generative AI Supply Chain Document Processing Application
 
+🚀 **Live Demo / Web Application:** [https://supplychaindocprocessingapp.onrender.com/](https://supplychaindocprocessingapp.onrender.com/)
+
+[![Live Application](https://img.shields.io/badge/Live_Application-Render-000000?style=for-the-badge&logo=render&logoColor=white)](https://supplychaindocprocessingapp.onrender.com/)
 
 This is an end-to-end Generative AI project focused on supply chain document processing. The application ingests unstructured documents — PDFs and scanned images — and converts them into clean, structured data stored in MongoDB Atlas.
 
